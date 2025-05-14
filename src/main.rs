@@ -46,17 +46,22 @@ async fn handle_request(
     update_password: Arc<Option<String>>,
 ) -> Result<Response<Full<Bytes>>, Infallible> {
     match (req.method(), req.uri().path()) {
-        // GET /url - Redirect to the URL if set, otherwise return an error
-        (&Method::GET, "/url") => {
+        // GET / - Proxy to the URL if set, otherwise return an error
+        (&Method::GET, "/") => {
             match read_url(shared_url).await {
                 Some(url) => {
-                    // Redirect to the URL
-                    let response = Response::builder()
-                        .status(StatusCode::FOUND) // 302 Found redirect
-                        .header(header::LOCATION, &url)
-                        .body(full(format!("Redirecting to {}", url)))
-                        .unwrap();
-                    Ok(response)
+                    // Proxy to the URL
+                    match proxy_request(&url).await {
+                        Ok(proxy_response) => Ok(proxy_response),
+                        Err(e) => {
+                            // Error occurred during proxying
+                            let response = Response::builder()
+                                .status(StatusCode::BAD_GATEWAY)
+                                .body(full(format!("Error proxying request: {}", e)))
+                                .unwrap();
+                            Ok(response)
+                        }
+                    }
                 },
                 None => {
                     // No URL is set, return an error
@@ -69,8 +74,8 @@ async fn handle_request(
             }
         },
         
-        // POST /url - Update the URL with the request body
-        (&Method::POST, "/url") => {
+        // POST /url - Update the URL with the request body (keeping /url for updates)
+        (&Method::POST, "/url") | (&Method::POST, "/") => {
             // Check if update password is set
             if let Some(required_password) = update_password.as_ref() {
                 // Password is set, so check for authorization
@@ -145,6 +150,27 @@ async fn handle_request(
             Ok(response)
         }
     }
+}
+
+// Function to proxy a request to the target URL (assuming it's a shields.io badge image)
+async fn proxy_request(url: &str) -> Result<Response<Full<Bytes>>, Box<dyn std::error::Error + Send + Sync>> {
+    // Use reqwest to fetch the image
+    let client = reqwest::Client::new();
+    let resp = client.get(url).send().await?;
+    
+    // Get the image data as bytes
+    let image_bytes = resp.bytes().await?;
+    
+    // Create a response with the image data
+    let response = Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "image/svg+xml")
+        .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+        .header(header::PRAGMA, "no-cache")
+        .header(header::EXPIRES, "0")
+        .body(full(image_bytes))?;
+    
+    Ok(response)
 }
 
 #[tokio::main]

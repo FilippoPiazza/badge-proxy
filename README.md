@@ -1,18 +1,19 @@
 # badge-proxy
 
-A simple HTTP server that stores a URL and redirects users to it. It can be used as a proxy for badges or other dynamic content that needs to be updated frequently.
+A simple HTTP server that stores a URL and proxies requests to it. It's designed specifically for proxying badge images from shields.io or similar services.
 
 ## Features
 
 - Store a URL that can be updated via POST requests
-- Redirect users to the stored URL when they access the `/url` endpoint
+- Proxy requests to the stored URL when users access the root path (`/`)
+- Return badge images directly to the client without redirecting
 - Optional password protection for URL updates
 - Configurable via environment variables
 
 ## API Endpoints
 
-- `GET /url`: Redirects to the stored URL
-- `POST /url`: Updates the stored URL (requires authentication if password is set)
+- `GET /`: Proxies the request to the stored URL and returns the content directly
+- `POST /` or `POST /url`: Updates the stored URL (requires authentication if password is set)
 
 ## Environment Variables
 
@@ -61,17 +62,21 @@ Replace `OWNER` with your GitHub username or organization name.
 
 ```bash
 # Without password protection
-curl -X POST -d "https://example.com/badge.svg" http://localhost:3000/url
+curl -X POST -d "https://example.com/badge.svg" http://localhost:3000/
 
 # With password protection
-curl -X POST -H "Authorization: Bearer your_password" -d "https://example.com/badge.svg" http://localhost:3000/url
+curl -X POST -H "Authorization: Bearer your_password" -d "https://example.com/badge.svg" http://localhost:3000/
 ```
 
 ### Accessing the URL
 
 ```bash
-# This will redirect to the stored URL
-curl -L http://localhost:3000/url
+# This will fetch the badge image from the stored URL and return it directly
+curl http://localhost:3000/
+
+# You can use this URL directly in HTML or Markdown
+# <img src="http://localhost:3000/" alt="Badge">
+# ![Badge](http://localhost:3000/)
 ```
 
 ## GitHub Actions Workflow
