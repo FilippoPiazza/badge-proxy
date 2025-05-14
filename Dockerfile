@@ -1,8 +1,8 @@
 # Build stage
-FROM rust:1.77-alpine as builder
+FROM rust:1.82-alpine AS builder
 
 # Install build dependencies
-RUN apk add --no-cache musl-dev
+RUN apk add --no-cache musl-dev openssl-dev pkgconfig openssl-libs-static
 
 # Create a new empty project
 WORKDIR /app
@@ -26,7 +26,9 @@ COPY --from=builder /app/target/release/badge-proxy /usr/local/bin/
 # Expose the port the server listens on
 EXPOSE 3000
 
-# Set environment variables (can be overridden at runtime)
+# Define environment variables that should be provided at runtime
+# These are intentionally left empty and should be provided when running the container
+# Example: docker run -e URL_UPDATE_PASSWORD="your_password" -e DEFAULT_URL="https://example.com" badge-proxy
 ENV URL_UPDATE_PASSWORD=""
 ENV DEFAULT_URL=""
 

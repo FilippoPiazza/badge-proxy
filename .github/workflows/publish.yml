@@ -22,19 +22,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Build Rust application
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release
-
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:

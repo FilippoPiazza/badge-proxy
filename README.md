@@ -48,13 +48,11 @@ This project is automatically built and published to GitHub Packages. You can us
 
 ```bash
 # Pull the image
-docker pull ghcr.io/OWNER/badge-proxy:latest
+docker pull ghcr.io/FilippoPiazza/badge-proxy:latest
 
 # Run the container
 docker run -p 3000:3000 -e URL_UPDATE_PASSWORD=your_password -e DEFAULT_URL=https://example.com ghcr.io/OWNER/badge-proxy:latest
 ```
-
-Replace `OWNER` with your GitHub username or organization name.
 
 ## Usage Examples
 
